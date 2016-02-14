@@ -1,0 +1,362 @@
+<!--
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>A New Startup: Sign Up Today!</title>
+
+
+    <link href="../static/bootstrap/css/theme/flatly/bootstrap.css" rel="stylesheet">
+    
+
+    <link href="../static/bootstrap/css/jumbotron-narrow.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+
+    <div class="container">
+      <div class="header">
+        <ul class="nav nav-pills pull-right">
+          <li class="active"><a href="#">Home</a></li>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Press</a></li>
+        </ul>
+        <h3 class="text-muted">A New Startup</h3>
+      </div>
+    	
+      <div id="signupSuccess" class="alert alert-success" style="display:none">
+        <p id="signupSuccessText">Thanks for signing up! You'll be among the first to know when we launch.</p>
+      </div>
+      <div id="signupDuplicate" class="alert alert-success" style="display:none">
+        <p id="signupDuplicateText">Fear not, you're already on the list! You'll be among the first to know when we launch.</p>
+      </div>
+      <div id="signupError" class="alert alert-info" style="display:none">
+        <p id="signupErrorText">Well this is embarrassing. It looks like we're having trouble getting you on the list.</p>
+      </div>
+      <div class="jumbotron">
+        <h1>The next big thing is coming...</h1>
+        <p class="lead">We're pretty thrilled to unveil our latest creation. Sign up below to be notified when we officially launch!</p>
+        <p><a class="btn btn-lg btn-success"  data-toggle="modal" href="#signupModal">Sign up today</a></p>
+      </div>
+
+
+      <div class="footer">
+        <p>&copy; A New Startup 2013</p>
+      </div>
+      
+
+       <div class="modal fade" id="signupModal" tabindex="-1" role="dialog" aria-labelledby="signupModal" aria-hidden="true">
+         <div class="modal-dialog">
+           <div class="modal-content">
+             <div class="modal-header">
+               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+               <h4 class="modal-title">Provide a few details and we'll be in touch...</h4>
+             </div>
+             <div class="modal-body">
+               <form id="signupForm" role="form">
+                 <input type="hidden" id="theme" name="theme" value="flatly"/>
+                 <div class="form-group">
+                   <label for="name">Name</label>
+                   <input type="text" class="form-control" id="name" name="name" placeholder="Your name">
+                 </div>
+                 <div class="form-group">
+                   <label for="email">Email address</label>
+                   <input type="email" class="form-control" id="email" name="email" placeholder="Your email address">
+                 </div>
+                 <div class="form-group">
+                   <label for="previewAccess">Interested in Preview Access?</label>
+                   <select class="form-control" name="previewAccess">
+                     <option>Yes</option>
+                     <option>No</option>
+                   </select>
+                 </div>
+             </div>
+             <div class="modal-footer">
+               <button id="signup" type="button" class="btn btn-primary">Sign Up!</button>
+             </div>
+           </div>
+         </div>
+       </div>
+
+    </div>
+
+    <script src="../static/jquery/jquery.js"></script>
+    <script src="../static/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+    $(document).ready(function() {
+      $("#signup").click(function() {
+        $.post( "/signup", $("#signupForm").serialize(),
+                function(data) {
+                  $("#signupSuccess").show();
+                }
+              )
+              .error(function(xhr) {
+                switch(xhr.status) {
+                  case 409:
+                    $("#signupDuplicate").show();
+                    break;
+                  default:
+                    $("#signupError").show();
+                }
+              })
+              .always(function() {
+                $("#signupModal").modal('hide');
+              });
+      })
+    })
+    </script>
+  </body>
+</html>
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="./frontend/css/index.css">
+
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    <style type="text/css">
+        body {
+            text-align: center;
+        }
+
+        .inputVideo text:focus {
+          border-color: #66afe9;
+          outline: 0;
+          -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, 0.6);
+          box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, 0.6);
+        }  
+
+        .formInput {
+            width: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <section class="formInput">
+        <input id="urlInput" onfocus="if(this.value == 'Paste a YouTube url here') { this.value = ''; }" class="inputVideo" type="text" value="Paste a YouTube url here"></input>
+        <input id="urlSubmit" class="btn btn-primary" type="submit" value="Create Lobby"></input>
+        <input id="readyUp" class="btn btn-success" type="submit" value="Ready Up"></input>
+    </section>
+    <div id="YTplayer"></div>
+
+    <h2 id="lobby_url"></h2>
+    <table id="lobby_participants" class="table table-hover table-striped table-bordered" cellspacing="0">
+        <thead>
+        <tr>
+            <th>Participant</th>
+            <th>Ready</th>
+        </tr>
+        </thead>
+    </table>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.js"></script>
+
+    <script type="text/javascript">
+        var videoUrlId = '';
+        var participant_id = null;
+        var player = null;
+
+        $(document).ready( function() {
+
+            var param = getParameterByName('video');
+            console.log("url is " + param);
+            if (!(param == null || param == "")) {
+                videoUrlId = param;
+                console.log("hiding");
+                $("#urlInput").hide();
+                $("#urlSubmit").hide();
+                createVideo();
+            }
+
+            var socket = io.connect();
+            socket.on('playVideo', function(data){
+                console.log("PLAY THE VIDEO");
+                player.playVideo();
+            });
+
+            function startVideo() {
+                //socket.emit('client_is_ready', {'status': 1});
+                player.playVideo();
+            }
+
+            function getParameterByName(name, url) {
+                if (!url) url = window.location.href;
+                name = name.replace(/[\[\]]/g, "\\$&");
+                var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                    results = regex.exec(url);
+                if (!results) return null;
+                if (!results[2]) return '';
+                return decodeURIComponent(results[2].replace(/\+/g, " "));
+            }
+
+
+
+
+
+
+
+            $('#urlSubmit').click(function() {
+                $.ajax({
+                    url: "/api/reset-ready-states",
+                    method: "post",
+                    success: function(res){
+                        console.log("reset lobby worked");
+                    }
+                });
+
+                $('#YTplayer').html('');
+                parseUrlToVideoId($('#urlInput').val());
+                createVideo();
+            });
+
+
+            $.ajax({
+                url: "/api/get-participant-id",
+                method: "post",
+                success: function(res){
+                    console.log("My participant id is " + res.participant_id);
+                    setParticipantId(res.participant_id);
+                },
+                failure: function(){
+                    console.log("participant id did not go through");
+                },
+            });
+
+            //var data = {'participant_id' : participant_id};
+            $('#readyUp').click(function() {
+                 $.ajax({
+                    url: "/api/ready-up",
+                    method: "post",
+                    data: {'participant_id' : participant_id, 'lobby_id' : getParameterByName('lobby_id')},
+                    datatype: 'json',
+                    success: function(res){
+                        console.log("ready up worked");
+                    },
+                    failure: function(){
+                        console.log("post did not go through");
+                    },
+                });
+            });
+
+            function setParticipantId(id) {
+                participant_id = id;
+            }
+
+            function parseUrlToVideoId(url) {
+                console.log('here');
+                videoUrlId = getQueryVariable('v'); // youtube video parameters in query strings use the variable 'v'
+                $.ajax({
+                    url: "/api/get-lobby-url",
+                    method: "post",
+                    data: {'videoUrlId' : videoUrlId},
+                    success: function(res){
+                        $('#lobby_url').html(res.url);
+                    },
+                    failure: function(){
+                        console.log("get lobby url did not go through");
+                    },
+                });
+                console.log(videoUrlId);
+            }
+
+            function createVideo() {
+                console.log('here2');
+
+                // Load the IFrame Player API code asynchronously.
+                var tag = document.createElement('script');
+                tag.src = "https://www.youtube.com/player_api";
+                var firstScriptTag = document.getElementsByTagName('script')[0];
+                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+                /*** onYoutubePlayerAPIReady() gets called automatically once the youtube api loads ***/
+
+                if (player != null)
+                {
+                    console.log('loading second video');
+                    player.loadVideoById(videoUrlId, "large");
+                    //player.pauseVideo();
+
+                    setTimeout(function(){ 
+                        player.pauseVideo();
+                    }, 500);
+
+                }
+            }
+        });
+
+        function onYouTubePlayerAPIReady() {
+            console.log("player ready");
+            player = new YT.Player('YTplayer', {
+                height: '390',
+                width: '640',
+                videoId: videoUrlId,
+                playerVars: {'iv_load_policy' : 3},
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange' : onStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(playerId) {
+            console.log('played video');
+            player.loadVideoById(videoUrlId, "large");
+            //player.pauseVideo();
+
+            setTimeout(function(){ 
+                player.pauseVideo();
+            }, 500);
+        }
+
+        function onStateChange(playerState) {
+            console.log("video state was changed to " + playerState);
+            if (playerState.data == YT.PlayerState.ENDED) {
+                console.log("video state was changed to ended");
+            }
+            if (playerState.data == YT.PlayerState.PLAYING) {
+                console.log("video state was changed to playing");
+            }
+            if (playerState.data == YT.PlayerState.PAUSED) {
+                console.log("video state was changed to paused");
+            }
+            if (playerState.data == YT.PlayerState.BUFFERING) {
+                console.log("video state was changed to buffering");
+            }
+            if (playerState.data == YT.PlayerState.CUED) {
+                console.log("video state was changed to video cued");
+            }
+        }
+
+        // this function taken from http://stackoverflow.com/questions/2090551/parse-query-string-in-javascript
+        function getQueryVariable(variable) {
+            // var query = window.location.search.substring(1);
+            var query = $('#urlInput').val();
+            console.log('query: ' + query);
+            var vars = query.split('?')[1].split('&');
+            console.log(vars);
+            for (var i = 0; i < vars.length; i++) {
+                var pair = vars[i].split('=');
+                if (decodeURIComponent(pair[0]) == variable) {
+                    return decodeURIComponent(pair[1]);
+                }
+            }
+            console.log('Query variable %s not found', variable);
+        }
+
+    </script>
+
+
+
+</body>
