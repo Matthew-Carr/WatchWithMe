@@ -20,11 +20,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 var lobby_id = 1;
 var i = 1;
-var lobby = [];
+var lobbies = [];
 
 var ready = [];
+var clients = {};
+var participants = [];
 
-var participant_map = {};
+var participant = function() {
+    this.socket_id = null;
+    this.participant_id = null;
+    this.ready = false;
+    this.lobby_id = null;
+}
 
 //app.use(express.static('../frontend/pages'));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -45,37 +52,24 @@ app.post('/api/get-lobby-url', function(req, res, next) {
     var url = 'localhost:8081/?video=' + req.body.videoUrlId + '&lobby_id=' + lobby_id;
     //lobby.push(lobby_id);
     lobby_id += 1;
-    var data = {'url' : url};
+    var data = url;
     res.send(data);
 });
 
 
 app.post('/api/get-participant-id', function(req, res, next) {
-/*    for (var lobby_id in lobby) {
-        if (!lobby.hasOwnProperty(lobby_id)) {continue;}
-        var user = lobby[lobby_id];
-        console.log(user + ' has participant id of ' + i);
-        i = i + 1;
-    }
-*/
     var data = {'participant_id' : i};
-    /*if (!lobby[req.body.lobby_id]) {
-        lobby[req.body.lobby_id] = [i];
-    }
-    else {
-        lobby[req.body.lobby_id].push(i);
-    }*/
-    lobby.push(i);
+    register_socket(i, req.body.socket_id, req.body.lobby_id);
     i += 1;
     res.send(data);
 });
 
-app.post('/api/reset-ready-states', function(req, res, next) {
+/*app.post('/api/reset-ready-states', function(req, res, next) {
     ready = [];
     lobby = [];
-});
+});*/
 
-app.post('/api/ready-up', function(req, res) {
+/*app.post('/api/ready-up', function(req, res) {
     console.log("length is " + clients.length);
     var ready_to_start = false;
     console.log(req.body.participant_id + " is ready to start");
@@ -89,7 +83,56 @@ app.post('/api/ready-up', function(req, res) {
             listener.sockets.connected[clients[client]].emit('playVideo', {'message': 'IT FUCKING WORKS'});
         }
     }
+});*/
+
+app.post('/api/start-video', function(req, res) {
+    console.log("inside start-video");
+    for (var lobby in participants) {
+        console.log(" lobby " + participants[lobby]);
+        var obj = participants[lobby];
+        for (var participant in participants[lobby]) {
+            console.log("comparing " + obj[participant].lobby_id + " to " + req.body.lobby_id);
+            if (obj[participant].lobby_id == req.body.lobby_id) {
+                console.log("found a participant, playing video");
+                listener.sockets.connected[obj[participant].socket_id].emit('playVideo', {'message': 'IT FUCKING WORKS'});
+            }
+        }
+    }
 });
+
+app.post('/api/pause-video', function(req, res) {
+    console.log("inside pause-video");
+    for (var lobby in participants) {
+        console.log(" lobby " + participants[lobby]);
+        var obj = participants[lobby];
+        for (var participant in participants[lobby]) {
+            console.log("comparing " + obj[participant].lobby_id + " to " + req.body.lobby_id);
+            if (obj[participant].lobby_id == req.body.lobby_id) {
+                console.log("found a participant, pause video");
+                listener.sockets.connected[obj[participant].socket_id].emit('pauseVideo', {'message': 'IT FUCKING WORKS'});
+            }
+        }
+    }
+});
+
+function register_socket(participant_id, socket_id, lobby_id) {
+    var p = new participant();
+    p.participant_id = participant_id;
+    p.socket_id = socket_id;
+    p.lobby_id = lobby_id
+    if (participants[lobby_id] == null) {
+        participants[lobby_id] = [];
+        participants[lobby_id].push(p);
+    }
+    else {
+        participants[lobby_id].push(p);
+    }
+
+    console.log(participants[lobby_id]);
+
+    //clients[participant_id] = socket_id;
+    console.log("socket was registered, length is " + Object.keys(participants).length + " lobby id is " + lobby_id);
+}
 
 var server = app.listen(8081, function() {
     var host = server.address().address;
@@ -101,11 +144,11 @@ var server = app.listen(8081, function() {
 var io = require('socket.io');
 
 var listener = io.listen(server);
-var clients = [];
+
 listener.sockets.on('connection', function(socket){
     console.log("a user has connected");
-    clients.push(socket.id);
-    socket.emit('message', {'message': 'IT FUCKING WORKS'});
+    //clients.push(socket.id);
+    socket.emit('socket_id', {'socket_id': socket.id});
 });
 
 listener.sockets.on('client_is_ready', function(socket){

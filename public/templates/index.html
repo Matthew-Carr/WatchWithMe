@@ -120,36 +120,37 @@
 
 <head>
     <meta charset="utf-8">
+    <title>Watch YouTube Videos With Friends!</title>
     <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="./frontend/css/index.css">
+    <link rel="stylesheet" type="text/css" href="../static/css/index.css">
 
     <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-
-    <style type="text/css">
-        body {
-            text-align: center;
-        }
-
-        .inputVideo text:focus {
-          border-color: #66afe9;
-          outline: 0;
-          -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, 0.6);
-          box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, 0.6);
-        }  
-
-        .formInput {
-            width: 200px;
-        }
-    </style>
 </head>
 
 <body>
-    <section class="formInput">
-        <input id="urlInput" onfocus="if(this.value == 'Paste a YouTube url here') { this.value = ''; }" class="inputVideo" type="text" value="Paste a YouTube url here"></input>
-        <input id="urlSubmit" class="btn btn-primary" type="submit" value="Create Lobby"></input>
-        <input id="readyUp" class="btn btn-success" type="submit" value="Ready Up"></input>
-    </section>
+
+
+
+    <div id="top-navbar">
+        <!-- Begin Top Dropdown Navbar -->
+        <nav class="navbar navbar-inverse navbar-static-top" role="navigation" style="margin-bottom: 0">
+        <!-- /.navbar-header -->
+
+        <ul class="nav navbar-top-links navbar-center" >
+                <form class="navbar-search ">
+                    <input id="urlInput" onfocus="$(this).select();" class="img-rounded formInput" type="text" placeholder="Paste a YouTube url here"></input>
+                    <input id="urlSubmit" class="btn btn-primary" type="submit" value="Create Lobby"></input>
+                    <input id="readyUp" class="btn btn-success" type="submit" value="Start"></input>
+                    <input id="pauseVideo" class="btn btn-danger" type="submit" value="Pause"></input>
+                </form>
+            
+        </ul>
+        <!-- End Top Dropdown Navbar -->
+    </div>
+
+
+
     <div id="YTplayer"></div>
 
     <h2 id="lobby_url"></h2>
@@ -157,35 +158,69 @@
         <thead>
         <tr>
             <th>Participant</th>
-            <th>Ready</th>
         </tr>
         </thead>
     </table>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.js"></script>
 
+
     <script type="text/javascript">
         var videoUrlId = '';
         var participant_id = null;
         var player = null;
+        var socket_id = null;
+        var video_param = null; 
+        var lobby_id_param = null;
+        var socket = null;
 
         $(document).ready( function() {
 
-            var param = getParameterByName('video');
-            console.log("url is " + param);
-            if (!(param == null || param == "")) {
-                videoUrlId = param;
+            video_param = getParameterByName('video');
+            lobby_id_param = getParameterByName('lobby_id');
+            console.log("lobby_id_param is " + lobby_id_param);
+            if (!(video_param == null || video_param == "")) { // if we got here from a generated url
+                videoUrlId = video_param;
                 console.log("hiding");
                 $("#urlInput").hide();
                 $("#urlSubmit").hide();
+                $("#readyUp").hide();
+                $("#pauseVideo").hide();
+
+                socket = io.connect();
+
+                socket.on('socket_id', function(data){
+                    socket_id = data.socket_id;
+
+                    console.log("lobby_id_param is before ajax " + lobby_id_param);
+                    $.ajax({
+                        url: "/api/get-participant-id",
+                        method: "post",
+                        data: {'socket_id' : socket_id, 'lobby_id' : lobby_id_param},
+                        success: function(res){
+                            console.log("My participant id is " + res.participant_id);
+                            setParticipantId(res.participant_id);
+                        },
+                        failure: function(){
+                            console.log("participant id did not go through");
+                        }
+                    });
+                });
+
+
+                socket.on('playVideo', function(data){
+                    console.log("PLAY THE VIDEO");
+                    player.playVideo();
+                });
+
+                socket.on('pauseVideo', function(data){
+                    console.log("PAUSE THE VIDEO");
+                    player.pauseVideo();
+                });
+
+
                 createVideo();
             }
-
-            var socket = io.connect();
-            socket.on('playVideo', function(data){
-                console.log("PLAY THE VIDEO");
-                player.playVideo();
-            });
 
             function startVideo() {
                 //socket.emit('client_is_ready', {'status': 1});
@@ -203,44 +238,58 @@
             }
 
 
-
-
-
-
-
             $('#urlSubmit').click(function() {
-                $.ajax({
-                    url: "/api/reset-ready-states",
-                    method: "post",
-                    success: function(res){
-                        console.log("reset lobby worked");
-                    }
+                $('#YTplayer').html('');
+                var real_lobby_id = parseUrlToVideoId($('#urlInput').val());
+                lobby_id_param = real_lobby_id;
+                //var url_to_parse = $('#lobby_url').val();
+                //console.log("url to parse " + url_to_parse);
+                //lobby_id_param = getParameterByName('lobby_id', url_to_parse);
+                console.log("lobby id " + real_lobby_id);
+                var socket = io.connect();
+                console.log("after socket connect ");
+
+                socket.on('socket_id', function(data){
+                    socket_id = data.socket_id;
+
+                    console.log("lobby_id_param is before ajax " + real_lobby_id);
+                    $.ajax({
+                        url: "/api/get-participant-id",
+                        method: "post",
+                        data: {'socket_id' : socket_id, 'lobby_id' : real_lobby_id},
+                        success: function(res){
+                            console.log("My participant id is " + res.participant_id);
+                            setParticipantId(res.participant_id);
+                        },
+                        failure: function(){
+                            console.log("participant id did not go through");
+                        }
+                    });
                 });
 
-                $('#YTplayer').html('');
-                parseUrlToVideoId($('#urlInput').val());
+
+                socket.on('playVideo', function(data){
+                    console.log("PLAY THE VIDEO");
+                    player.playVideo();
+                });
+
+                socket.on('pauseVideo', function(data){
+                    console.log("PAUSE THE VIDEO");
+                    player.pauseVideo();
+                });
+
                 createVideo();
-            });
 
-
-            $.ajax({
-                url: "/api/get-participant-id",
-                method: "post",
-                success: function(res){
-                    console.log("My participant id is " + res.participant_id);
-                    setParticipantId(res.participant_id);
-                },
-                failure: function(){
-                    console.log("participant id did not go through");
-                },
+                return false;
             });
 
             //var data = {'participant_id' : participant_id};
             $('#readyUp').click(function() {
+                console.log("lobby id when ready up is " + lobby_id_param);
                  $.ajax({
-                    url: "/api/ready-up",
+                    url: "/api/start-video",
                     method: "post",
-                    data: {'participant_id' : participant_id, 'lobby_id' : getParameterByName('lobby_id')},
+                    data: {'participant_id' : participant_id, 'lobby_id' : lobby_id_param},
                     datatype: 'json',
                     success: function(res){
                         console.log("ready up worked");
@@ -249,27 +298,54 @@
                         console.log("post did not go through");
                     },
                 });
+
+                return false;
+            });
+
+            $('#pauseVideo').click(function() {
+                 $.ajax({
+                    url: "/api/pause-video",
+                    method: "post",
+                    data: {'participant_id' : participant_id, 'lobby_id' : lobby_id_param},
+                    datatype: 'json',
+                    success: function(res){
+                        console.log("pause worked");
+                    },
+                    failure: function(){
+                        console.log("pause did not go through");
+                    },
+                });
+
+                return false;
             });
 
             function setParticipantId(id) {
+                console.log('4');
                 participant_id = id;
+            }
+
+            function setLobbyId(id) {
+                lobby_id_param = id;
+                console.log("set lobby id to " + lobby_id_param);
             }
 
             function parseUrlToVideoId(url) {
                 console.log('here');
                 videoUrlId = getQueryVariable('v'); // youtube video parameters in query strings use the variable 'v'
-                $.ajax({
-                    url: "/api/get-lobby-url",
-                    method: "post",
-                    data: {'videoUrlId' : videoUrlId},
-                    success: function(res){
-                        $('#lobby_url').html(res.url);
-                    },
-                    failure: function(){
-                        console.log("get lobby url did not go through");
-                    },
-                });
-                console.log(videoUrlId);
+                var response = 
+                    $.ajax({
+                        url: "/api/get-lobby-url",
+                        method: "post",
+                        data: {'videoUrlId' : videoUrlId},
+                        async: false
+                    }).responseText;
+
+
+                $('#lobby_url').html(response);
+                var id = getParameterByName('lobby_id', response);
+                setLobbyId(id);
+                console.log("lobby id after setlobby is " + lobby_id_param);
+                return id;
             }
 
             function createVideo() {
@@ -286,16 +362,18 @@
                 {
                     console.log('loading second video');
                     player.loadVideoById(videoUrlId, "large");
-                    //player.pauseVideo();
+                    player.pauseVideo();
 
                     setTimeout(function(){ 
                         player.pauseVideo();
                     }, 500);
 
                 }
+                console.log('end of createVideo');
             }
         });
-
+        
+        console.log('1');
         function onYouTubePlayerAPIReady() {
             console.log("player ready");
             player = new YT.Player('YTplayer', {
@@ -309,7 +387,7 @@
                 }
             });
         }
-
+        console.log('2');
         function onPlayerReady(playerId) {
             console.log('played video');
             player.loadVideoById(videoUrlId, "large");
@@ -319,7 +397,7 @@
                 player.pauseVideo();
             }, 500);
         }
-
+        console.log('3');
         function onStateChange(playerState) {
             console.log("video state was changed to " + playerState);
             if (playerState.data == YT.PlayerState.ENDED) {
@@ -356,6 +434,8 @@
         }
 
     </script>
+
+
 
 
 
