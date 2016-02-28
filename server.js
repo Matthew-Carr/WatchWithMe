@@ -48,8 +48,8 @@ app.get('/', function(req, res) {
 
 
 app.post('/api/get-lobby-url', function(req, res, next) {
-    //var url = 'www.mystartupapp1993-env.elasticbeanstalk.com/?video=' + req.body.videoUrlId + '&lobby_id=' + lobby_id;
-    var url = 'localhost:8081/?video=' + req.body.videoUrlId + '&lobby_id=' + lobby_id;
+    var url = 'http://www.mystartupapp1993-env.elasticbeanstalk.com/?video=' + req.body.videoUrlId + '&lobby_id=' + lobby_id;
+    //var url = 'localhost:8081/?video=' + req.body.videoUrlId + '&lobby_id=' + lobby_id;
     //lobby.push(lobby_id);
     lobby_id += 1;
     var data = url;
@@ -113,6 +113,31 @@ app.post('/api/pause-video', function(req, res) {
             }
         }
     }
+});
+
+app.post('/api/get-participants', function(req, res) {
+    var lobby_participants = [];
+    console.log("inside get-participants");
+    for (var lobby in participants) {
+        console.log(" lobby " + participants[lobby]);
+        var obj = participants[lobby];
+        for (var participant in participants[lobby]) {
+            console.log("comparing " + obj[participant].lobby_id + " to " + req.body.lobby_id);
+            if (obj[participant].lobby_id == req.body.lobby_id) {
+                console.log("found a participant, adding to array");
+                lobby_participants.push(obj[participant]);
+            }
+        }
+    }
+
+    console.log(lobby_participants);
+
+    // send them out
+    for (var person in lobby_participants) {
+        console.log(" lobby " + lobby_participants[person]);
+        listener.sockets.connected[lobby_participants[person].socket_id].emit('participants', {'participants' : lobby_participants});
+    }
+    
 });
 
 function register_socket(participant_id, socket_id, lobby_id) {

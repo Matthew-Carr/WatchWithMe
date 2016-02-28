@@ -205,6 +205,14 @@
                             console.log("participant id did not go through");
                         }
                     });
+
+                    console.log('lobby id before get participants is ' + lobby_id_param);
+                    $.ajax({
+                        url: "/api/get-participants",
+                        method: "post",
+                        data: {'lobby_id' : lobby_id_param},
+                        datatype: 'json',
+                    });
                 });
 
 
@@ -216,6 +224,17 @@
                 socket.on('pauseVideo', function(data){
                     console.log("PAUSE THE VIDEO");
                     player.pauseVideo();
+                });
+
+                socket.on('participants', function(data){
+                    console.log("got participants");
+                    console.log(data.participants);
+                    $('#lobby_participants').html('');
+                    for (var participant in data.participants) {
+                        console.log(data.participants[participant]);
+                        console.log(data.participants[participant].participant_id);
+                        $('#lobby_participants').append('<tr><td>' + data.participants[participant].participant_id + '</td></tr>');
+                    }
                 });
 
 
@@ -249,6 +268,17 @@
                 var socket = io.connect();
                 console.log("after socket connect ");
 
+                socket.on('participants', function(data){
+                    console.log("got participants");
+                    console.log(data.participants);
+                    $('#lobby_participants').html('');
+                    for (var participant in data.participants) {
+                        console.log(data.participants[participant]);
+                        console.log(data.participants[participant].participant_id);
+                        $('#lobby_participants').append('<tr><td>' + data.participants[participant].participant_id + '</td></tr>');
+                    }
+                });
+
                 socket.on('socket_id', function(data){
                     socket_id = data.socket_id;
 
@@ -264,6 +294,13 @@
                         failure: function(){
                             console.log("participant id did not go through");
                         }
+                    });
+
+                    $.ajax({
+                        url: "/api/get-participants",
+                        method: "post",
+                        data: {'lobby_id' : lobby_id_param},
+                        datatype: 'json',
                     });
                 });
 
