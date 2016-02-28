@@ -187,13 +187,14 @@
                 $("#readyUp").hide();
                 $("#pauseVideo").hide();
 
+                if (socket != null) {socket.close();}
                 socket = io.connect();
 
                 socket.on('socket_id', function(data){
                     socket_id = data.socket_id;
 
                     console.log("lobby_id_param is before ajax " + lobby_id_param);
-                    $.ajax({
+                    /*$.ajax({
                         url: "/api/get-participant-id",
                         method: "post",
                         data: {'socket_id' : socket_id, 'lobby_id' : lobby_id_param},
@@ -204,7 +205,9 @@
                         failure: function(){
                             console.log("participant id did not go through");
                         }
-                    });
+                    });*/
+
+                    socket.emit('get_participant_id', {'socket_id' : socket_id, 'lobby_id' : lobby_id_param});
                 });
 
 
@@ -216,6 +219,11 @@
                 socket.on('pauseVideo', function(data){
                     console.log("PAUSE THE VIDEO");
                     player.pauseVideo();
+                });
+
+                socket.on('get_participant_id', function(data){
+                    console.log("My participant id is " + data.participant_id);
+                    setParticipantId(data.participant_id);
                 });
 
 
@@ -246,14 +254,15 @@
                 //console.log("url to parse " + url_to_parse);
                 //lobby_id_param = getParameterByName('lobby_id', url_to_parse);
                 console.log("lobby id " + real_lobby_id);
-                var socket = io.connect();
+                if (socket != null) {socket.close();}
+                socket = io.connect();
                 console.log("after socket connect ");
 
                 socket.on('socket_id', function(data){
                     socket_id = data.socket_id;
 
                     console.log("lobby_id_param is before ajax " + real_lobby_id);
-                    $.ajax({
+                    /*$.ajax({
                         url: "/api/get-participant-id",
                         method: "post",
                         data: {'socket_id' : socket_id, 'lobby_id' : real_lobby_id},
@@ -264,7 +273,9 @@
                         failure: function(){
                             console.log("participant id did not go through");
                         }
-                    });
+                    });*/
+
+                    socket.emit('get_participant_id', {'socket_id' : socket_id, 'lobby_id' : real_lobby_id});
                 });
 
 
@@ -278,6 +289,11 @@
                     player.pauseVideo();
                 });
 
+                socket.on('get_participant_id', function(data){
+                    console.log("My participant id is " + data.participant_id);
+                    setParticipantId(data.participant_id);
+                });
+
                 createVideo();
 
                 return false;
@@ -286,35 +302,40 @@
             //var data = {'participant_id' : participant_id};
             $('#readyUp').click(function() {
                 console.log("lobby id when ready up is " + lobby_id_param);
-                 $.ajax({
+                /* $.ajax({
                     url: "/api/start-video",
                     method: "post",
                     data: {'participant_id' : participant_id, 'lobby_id' : lobby_id_param},
                     datatype: 'json',
-                    success: function(res){
+                    success: function(){
                         console.log("ready up worked");
                     },
                     failure: function(){
                         console.log("post did not go through");
                     },
-                });
+                });*/
+
+                socket.emit('play_video', {lobby_id : lobby_id_param});
 
                 return false;
             });
 
             $('#pauseVideo').click(function() {
-                 $.ajax({
+                console.log('inside pause video');
+                 /*$.ajax({
                     url: "/api/pause-video",
                     method: "post",
                     data: {'participant_id' : participant_id, 'lobby_id' : lobby_id_param},
                     datatype: 'json',
-                    success: function(res){
+                    success: function(){
                         console.log("pause worked");
                     },
                     failure: function(){
                         console.log("pause did not go through");
                     },
-                });
+                });*/
+
+                socket.emit('pause_video', {lobby_id : lobby_id_param});
 
                 return false;
             });
