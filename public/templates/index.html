@@ -158,6 +158,7 @@
         <thead>
         <tr>
             <th>Participant</th>
+            <th>Status</th>
         </tr>
         </thead>
     </table>
@@ -192,22 +193,14 @@
 
                 socket.on('socket_id', function(data){
                     socket_id = data.socket_id;
-
-                    console.log("lobby_id_param is before ajax " + lobby_id_param);
-                    /*$.ajax({
-                        url: "/api/get-participant-id",
-                        method: "post",
-                        data: {'socket_id' : socket_id, 'lobby_id' : lobby_id_param},
-                        success: function(res){
-                            console.log("My participant id is " + res.participant_id);
-                            setParticipantId(res.participant_id);
-                        },
-                        failure: function(){
-                            console.log("participant id did not go through");
-                        }
-                    });*/
-
                     socket.emit('get_participant_id', {'socket_id' : socket_id, 'lobby_id' : lobby_id_param});
+
+                    $.ajax({
+                        url: "/api/get-participants",
+                        method: "post",
+                        data: {'lobby_id' : lobby_id_param},
+                        datatype: 'json',
+                    });
                 });
 
 
@@ -221,9 +214,40 @@
                     player.pauseVideo();
                 });
 
+                socket.on('participant_status_update', function(data){
+                    console.log("participant status update");
+                    console.log(data);
+                    console.log(data.participants.length);
+                    console.log("participant status update");
+
+                    for (var n = 0; n < data.participants.length; n++) {
+                        $('#lobby_participants tr').each(function() {
+                            var row = $(this);
+                            var participant_id = $(this).find('td:eq(0)');
+                            var status = $(this).find('td:eq(1)');
+                            console.log('participant: ' + participant_id.html());
+                            console.log('status: ' + status.html());
+                            console.log('comparing against ' + data.participants[n].participant_id);
+                            console.log('and ' + data.participants[n].player_status);
+                            if (participant_id.html() == data.participants[n].participant_id) {
+                                status.html(data.participants[n].player_status);
+                            }
+                            
+                        });
+                    }
+                });
+
                 socket.on('get_participant_id', function(data){
                     console.log("My participant id is " + data.participant_id);
                     setParticipantId(data.participant_id);
+                });
+
+                socket.on('participants', function(data){
+                    $('#lobby_participants').html('');
+                    $('#lobby_participants').append('<thead><tr><th>Participants</th><th>Status</th></tr>');
+                    for (var participant in data.participants) {
+                        $('#lobby_participants').append('<tr><td>' + data.participants[participant].participant_id + '</td><td>buffering</td></tr>');
+                    }
                 });
 
 
@@ -250,43 +274,29 @@
                 $('#YTplayer').html('');
                 var real_lobby_id = parseUrlToVideoId($('#urlInput').val());
                 lobby_id_param = real_lobby_id;
-                //var url_to_parse = $('#lobby_url').val();
-                //console.log("url to parse " + url_to_parse);
-                //lobby_id_param = getParameterByName('lobby_id', url_to_parse);
-                console.log("lobby id " + real_lobby_id);
+
                 if (socket != null) {socket.close();}
                 socket = io.connect();
-                console.log("after socket connect ");
 
                 socket.on('participants', function(data){
-                    console.log("got participants");
-                    console.log(data.participants);
                     $('#lobby_participants').html('');
+                    $('#lobby_participants').append('<thead><tr><th>Participants</th><th>Status</th></tr>');
                     for (var participant in data.participants) {
-                        console.log(data.participants[participant]);
-                        console.log(data.participants[participant].participant_id);
-                        $('#lobby_participants').append('<tr><td>' + data.participants[participant].participant_id + '</td></tr>');
+                        $('#lobby_participants').append('<tr><td>' + data.participants[participant].participant_id + '</td><td>buffering</td></tr>');
                     }
                 });
 
                 socket.on('socket_id', function(data){
                     socket_id = data.socket_id;
 
-                    console.log("lobby_id_param is before ajax " + real_lobby_id);
-                    /*$.ajax({
-                        url: "/api/get-participant-id",
-                        method: "post",
-                        data: {'socket_id' : socket_id, 'lobby_id' : real_lobby_id},
-                        success: function(res){
-                            console.log("My participant id is " + res.participant_id);
-                            setParticipantId(res.participant_id);
-                        },
-                        failure: function(){
-                            console.log("participant id did not go through");
-                        }
-                    });*/
-
                     socket.emit('get_participant_id', {'socket_id' : socket_id, 'lobby_id' : real_lobby_id});
+
+                    $.ajax({
+                        url: "/api/get-participants",
+                        method: "post",
+                        data: {'lobby_id' : lobby_id_param},
+                        datatype: 'json',
+                    });
                 });
 
 
@@ -298,6 +308,29 @@
                 socket.on('pauseVideo', function(data){
                     console.log("PAUSE THE VIDEO");
                     player.pauseVideo();
+                });
+
+                socket.on('participant_status_update', function(data){
+                    console.log("participant status update");
+                    console.log(data);
+                    console.log(data.participants.length);
+                    console.log("participant status update");
+
+                    for (var n = 0; n < data.participants.length; n++) {
+                        $('#lobby_participants tr').each(function() {
+                            var row = $(this);
+                            var participant_id = $(this).find('td:eq(0)');
+                            var status = $(this).find('td:eq(1)');
+                            console.log('participant: ' + participant_id.html());
+                            console.log('status: ' + status.html());
+                            console.log('comparing against ' + data.participants[n].participant_id);
+                            console.log('and ' + data.participants[n].player_status);
+                            if (participant_id.html() == data.participants[n].participant_id) {
+                                status.html(data.participants[n].player_status);
+                            }
+                            
+                        });
+                    }
                 });
 
                 socket.on('get_participant_id', function(data){
@@ -312,57 +345,24 @@
 
             //var data = {'participant_id' : participant_id};
             $('#readyUp').click(function() {
-                console.log("lobby id when ready up is " + lobby_id_param);
-                /* $.ajax({
-                    url: "/api/start-video",
-                    method: "post",
-                    data: {'participant_id' : participant_id, 'lobby_id' : lobby_id_param},
-                    datatype: 'json',
-                    success: function(){
-                        console.log("ready up worked");
-                    },
-                    failure: function(){
-                        console.log("post did not go through");
-                    },
-                });*/
-
                 socket.emit('play_video', {lobby_id : lobby_id_param});
-
                 return false;
             });
 
             $('#pauseVideo').click(function() {
-                console.log('inside pause video');
-                 /*$.ajax({
-                    url: "/api/pause-video",
-                    method: "post",
-                    data: {'participant_id' : participant_id, 'lobby_id' : lobby_id_param},
-                    datatype: 'json',
-                    success: function(){
-                        console.log("pause worked");
-                    },
-                    failure: function(){
-                        console.log("pause did not go through");
-                    },
-                });*/
-
                 socket.emit('pause_video', {lobby_id : lobby_id_param});
-
                 return false;
             });
 
             function setParticipantId(id) {
-                console.log('4');
                 participant_id = id;
             }
 
             function setLobbyId(id) {
                 lobby_id_param = id;
-                console.log("set lobby id to " + lobby_id_param);
             }
 
             function parseUrlToVideoId(url) {
-                console.log('here');
                 videoUrlId = getQueryVariable('v'); // youtube video parameters in query strings use the variable 'v'
                 var response = 
                     $.ajax({
@@ -376,13 +376,10 @@
                 $('#lobby_url').html(response);
                 var id = getParameterByName('lobby_id', response);
                 setLobbyId(id);
-                console.log("lobby id after setlobby is " + lobby_id_param);
                 return id;
             }
 
             function createVideo() {
-                console.log('here2');
-
                 // Load the IFrame Player API code asynchronously.
                 var tag = document.createElement('script');
                 tag.src = "https://www.youtube.com/player_api";
@@ -392,20 +389,16 @@
 
                 if (player != null)
                 {
-                    console.log('loading second video');
                     player.loadVideoById(videoUrlId, "large");
                     player.pauseVideo();
 
                     setTimeout(function(){ 
                         player.pauseVideo();
                     }, 500);
-
                 }
-                console.log('end of createVideo');
             }
         });
         
-        console.log('1');
         function onYouTubePlayerAPIReady() {
             console.log("player ready");
             player = new YT.Player('YTplayer', {
@@ -419,9 +412,7 @@
                 }
             });
         }
-        console.log('2');
         function onPlayerReady(playerId) {
-            console.log('played video');
             player.loadVideoById(videoUrlId, "large");
             //player.pauseVideo();
 
@@ -429,24 +420,30 @@
                 player.pauseVideo();
             }, 500);
         }
-        console.log('3');
         function onStateChange(playerState) {
-            console.log("video state was changed to " + playerState);
+            var player_status = null;
             if (playerState.data == YT.PlayerState.ENDED) {
                 console.log("video state was changed to ended");
+                player_status = 'ended';
             }
             if (playerState.data == YT.PlayerState.PLAYING) {
                 console.log("video state was changed to playing");
+                player_status = 'playing';
             }
             if (playerState.data == YT.PlayerState.PAUSED) {
                 console.log("video state was changed to paused");
+                player_status = 'paused';
             }
             if (playerState.data == YT.PlayerState.BUFFERING) {
                 console.log("video state was changed to buffering");
+                player_status = 'buffering';
             }
             if (playerState.data == YT.PlayerState.CUED) {
                 console.log("video state was changed to video cued");
+                player_status = 'cued';
             }
+
+            socket.emit('update_player_status', {'socket_id' : socket_id, 'player_status' : player_status, 'lobby_id' : lobby_id_param});
         }
 
         // this function taken from http://stackoverflow.com/questions/2090551/parse-query-string-in-javascript
