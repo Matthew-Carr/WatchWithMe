@@ -46,7 +46,6 @@ app.get('/', function(req, res) {
     return res.sendfile('index.html', {root: "./public/templates"});
 });
 
-
 app.post('/api/get-lobby-url', function(req, res, next) {
     var url = 'http://www.mystartupapp1993-env.elasticbeanstalk.com/?video=' + req.body.videoUrlId + '&lobby_id=' + lobby_id;
     //var url = 'localhost:8081/?video=' + req.body.videoUrlId + '&lobby_id=' + lobby_id;
@@ -62,82 +61,6 @@ app.post('/api/get-participant-id', function(req, res, next) {
     register_socket(i, req.body.socket_id, req.body.lobby_id);
     i += 1;
     res.send(data);
-});
-
-/*app.post('/api/reset-ready-states', function(req, res, next) {
-    ready = [];
-    lobby = [];
-});*/
-
-/*app.post('/api/ready-up', function(req, res) {
-    console.log("length is " + clients.length);
-    var ready_to_start = false;
-    console.log(req.body.participant_id + " is ready to start");
-    if (!(req.body.participant_id in ready)) {
-        ready.push(req.body.participant_id);
-    }
-    //if (ready.length == lobby[req.body.lobby_id].length) {
-    if (ready.length == lobby.length) {
-        console.log("This is when we should start the video ");
-        for (client in clients) {
-            listener.sockets.connected[clients[client]].emit('playVideo', {'message': 'IT FUCKING WORKS'});
-        }
-    }
-});*/
-
-app.post('/api/start-video', function(req, res) {
-    console.log("inside start-video");
-    for (var lobby in participants) {
-        console.log(" lobby " + participants[lobby]);
-        var obj = participants[lobby];
-        for (var participant in participants[lobby]) {
-            console.log("comparing " + obj[participant].lobby_id + " to " + req.body.lobby_id);
-            if (obj[participant].lobby_id == req.body.lobby_id) {
-                console.log("found a participant, playing video");
-                listener.sockets.connected[obj[participant].socket_id].emit('playVideo', {'message': 'IT FUCKING WORKS'});
-            }
-        }
-    }
-});
-
-app.post('/api/pause-video', function(req, res) {
-    console.log("inside pause-video");
-    for (var lobby in participants) {
-        console.log(" lobby " + participants[lobby]);
-        var obj = participants[lobby];
-        for (var participant in participants[lobby]) {
-            console.log("comparing " + obj[participant].lobby_id + " to " + req.body.lobby_id);
-            if (obj[participant].lobby_id == req.body.lobby_id) {
-                console.log("found a participant, pause video");
-                listener.sockets.connected[obj[participant].socket_id].emit('pauseVideo', {'message': 'IT FUCKING WORKS'});
-            }
-        }
-    }
-});
-
-app.post('/api/get-participants', function(req, res) {
-    var lobby_participants = [];
-    console.log("inside get-participants");
-    for (var lobby in participants) {
-        console.log(" lobby " + participants[lobby]);
-        var obj = participants[lobby];
-        for (var participant in participants[lobby]) {
-            console.log("comparing " + obj[participant].lobby_id + " to " + req.body.lobby_id);
-            if (obj[participant].lobby_id == req.body.lobby_id) {
-                console.log("found a participant, adding to array");
-                lobby_participants.push(obj[participant]);
-            }
-        }
-    }
-
-    console.log(lobby_participants);
-
-    // send them out
-    for (var person in lobby_participants) {
-        console.log(" lobby " + lobby_participants[person]);
-        listener.sockets.connected[lobby_participants[person].socket_id].emit('participants', {'participants' : lobby_participants});
-    }
-    
 });
 
 function register_socket(participant_id, socket_id, lobby_id) {
@@ -174,10 +97,44 @@ listener.sockets.on('connection', function(socket){
     console.log("a user has connected");
     //clients.push(socket.id);
     socket.emit('socket_id', {'socket_id': socket.id});
-});
 
-listener.sockets.on('client_is_ready', function(socket){
-    console.log("starting the video");
-    socket.emit('playVideo', {'message': 'IT FUCKING WORKS'});
-});
+    socket.on('play_video', function(data){
+        var lobby_id = data.lobby_id;
+        console.log("inside start-video");
+        for (var lobby in participants) {
+            console.log(" lobby " + participants[lobby]);
+            var obj = participants[lobby];
+            for (var participant in participants[lobby]) {
+                console.log("comparing " + obj[participant].lobby_id + " to " + lobby_id);
+                if (obj[participant].lobby_id == lobby_id) {
+                    console.log("found a participant, playing video");
+                    listener.sockets.connected[obj[participant].socket_id].emit('playVideo', {'message': 'IT FUCKING WORKS'});
+                }
+            }
+        }
+    });
 
+    socket.on('pause_video', function(data){
+        var lobby_id = data.lobby_id;
+        console.log("inside start-video");
+        for (var lobby in participants) {
+            console.log(" lobby " + participants[lobby]);
+            var obj = participants[lobby];
+            for (var participant in participants[lobby]) {
+                console.log("comparing " + obj[participant].lobby_id + " to " + lobby_id);
+                if (obj[participant].lobby_id == lobby_id) {
+                    console.log("found a participant, playing video");
+                    listener.sockets.connected[obj[participant].socket_id].emit('pauseVideo', {'message': 'IT FUCKING WORKS'});
+                }
+            }
+        }
+    });
+
+    socket.on('get_participant_id', function(data){
+        var id = {'participant_id' : i};
+        register_socket(i, data.socket_id, data.lobby_id);
+        i += 1;
+        socket.emit('get_participant_id', id);
+    });
+
+});
